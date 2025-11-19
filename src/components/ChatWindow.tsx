@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { chatApi, ChatMessage, ChatResponse, Source } from '../api/chat'
 import SourceCitation from './SourceCitation'
 
@@ -8,6 +9,7 @@ interface MessageWithMetadata extends ChatMessage {
 }
 
 export default function ChatWindow() {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState<MessageWithMetadata[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [conversationId, setConversationId] = useState<string | undefined>()
@@ -92,12 +94,20 @@ export default function ChatWindow() {
             {conversationId ? `Conversation: ${conversationId.slice(0, 8)}...` : 'Start a new conversation'}
           </p>
         </div>
-        <button
-          onClick={handleNewConversation}
-          className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-        >
-          New Chat
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate('/data')}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Manage Data
+          </button>
+          <button
+            onClick={handleNewConversation}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            New Chat
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}

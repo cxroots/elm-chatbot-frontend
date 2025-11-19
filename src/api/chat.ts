@@ -32,6 +32,20 @@ export interface ChatResponse {
   timestamp: string
 }
 
+export interface Document {
+  id: string
+  title: string
+  text: string
+  category: string
+  metadata?: any
+  created_at?: string
+}
+
+export interface DocumentsResponse {
+  documents: Document[]
+  total: number
+}
+
 export const chatApi = {
   /**
    * Send a chat message
@@ -61,6 +75,30 @@ export const chatApi = {
    */
   async healthCheck(): Promise<any> {
     const response = await axios.get(`${API_URL}/health`)
+    return response.data
+  },
+
+  /**
+   * Get all documents
+   */
+  async getAllDocuments(): Promise<DocumentsResponse> {
+    const response = await axios.get<DocumentsResponse>(`${API_URL}/api/documents`)
+    return response.data
+  },
+
+  /**
+   * Ingest documents
+   */
+  async ingestDocuments(documents: any[]): Promise<any> {
+    const response = await axios.post(`${API_URL}/api/documents/ingest`, { documents })
+    return response.data
+  },
+
+  /**
+   * Delete a document
+   */
+  async deleteDocument(docId: string): Promise<any> {
+    const response = await axios.delete(`${API_URL}/api/documents/${docId}`)
     return response.data
   },
 }
