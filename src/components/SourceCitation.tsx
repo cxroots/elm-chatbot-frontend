@@ -9,9 +9,9 @@ export default function SourceCitation({ sources, confidence }: SourceCitationPr
   if (sources.length === 0) return null
 
   const getConfidenceBadge = (conf: number) => {
-    if (conf >= 0.8) {
+    if (conf >= 0.7) {
       return <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">High Confidence</span>
-    } else if (conf >= 0.6) {
+    } else if (conf >= 0.5) {
       return <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Medium Confidence</span>
     } else {
       return <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">Low Confidence</span>
