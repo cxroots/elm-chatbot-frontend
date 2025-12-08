@@ -14,6 +14,9 @@ import {
   ChevronDown,
   User,
   ListChecks,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
 } from 'lucide-react'
 import faqIcon from '../assets/faq-icon.png'
 
@@ -76,6 +79,18 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     addSuccess: 'FAQ successfully added!',
     fillAllFields: 'Please fill in all fields',
     loadFailed: 'Failed to load documents',
+    // New translations
+    editFaq: 'Edit FAQ',
+    updateFaq: 'Update FAQ',
+    updateSuccess: 'FAQ updated successfully!',
+    updateFailed: 'Failed to update FAQ',
+    deleteConfirmTitle: 'Delete FAQ',
+    deleteConfirmMessage: 'Are you sure you want to delete this FAQ? This action cannot be undone.',
+    delete: 'Delete',
+    page: 'Page',
+    previous: 'Previous',
+    next: 'Next',
+    itemsPerPage: 'Items per page',
   },
   'Arabic': {
     faqManager: 'مدير الأسئلة الشائعة',
@@ -118,6 +133,18 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     addSuccess: 'تمت إضافة السؤال بنجاح!',
     fillAllFields: 'يرجى ملء جميع الحقول',
     loadFailed: 'فشل في تحميل المستندات',
+    // New translations
+    editFaq: 'تعديل السؤال',
+    updateFaq: 'تحديث السؤال',
+    updateSuccess: 'تم تحديث السؤال بنجاح!',
+    updateFailed: 'فشل في تحديث السؤال',
+    deleteConfirmTitle: 'حذف السؤال',
+    deleteConfirmMessage: 'هل أنت متأكد من حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.',
+    delete: 'حذف',
+    page: 'صفحة',
+    previous: 'السابق',
+    next: 'التالي',
+    itemsPerPage: 'عناصر لكل صفحة',
   }
 }
 
@@ -146,6 +173,29 @@ export default function DataManagement() {
   const [filterLanguage, setFilterLanguage] = useState<string>('')
   const [systemLanguage, setSystemLanguage] = useState<string>('English')
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; docId: string; docTitle: string }>({
+    show: false,
+    docId: '',
+    docTitle: ''
+  })
+
+  // Edit Modal State
+  const [editModal, setEditModal] = useState<{ show: boolean; doc: Document | null }>({
+    show: false,
+    doc: null
+  })
+  const [editFormData, setEditFormData] = useState<FAQForm>({
+    title: '',
+    text: '',
+    category: '',
+    language: 'English'
+  })
 
   // Load initial data
   useEffect(() => {
@@ -224,16 +274,77 @@ export default function DataManagement() {
     }
   }
 
-  const handleDelete = async (docId: string) => {
-    if (!confirm(TRANSLATIONS[systemLanguage]?.confirmDelete || 'Are you sure you want to delete this FAQ?')) return
+  const openDeleteModal = (doc: Document) => {
+    setDeleteModal({ show: true, docId: doc.id, docTitle: doc.title })
+  }
 
+  const closeDeleteModal = () => {
+    setDeleteModal({ show: false, docId: '', docTitle: '' })
+  }
+
+  const handleDelete = async () => {
     try {
       setLoading(true)
-      await chatApi.deleteDocument(docId)
+      await chatApi.deleteDocument(deleteModal.docId)
       setMessage({ type: 'success', text: TRANSLATIONS[systemLanguage]?.deleteSuccess || 'FAQ deleted successfully' })
+      closeDeleteModal()
       await loadDocuments()
     } catch (error) {
       setMessage({ type: 'error', text: TRANSLATIONS[systemLanguage]?.deleteFailed || 'Failed to delete FAQ' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openEditModal = (doc: Document) => {
+    setEditFormData({
+      title: doc.title,
+      text: doc.text,
+      category: doc.category,
+      language: doc.metadata?.language || 'English'
+    })
+    setEditModal({ show: true, doc })
+  }
+
+  const closeEditModal = () => {
+    setEditModal({ show: false, doc: null })
+    setEditFormData({ title: '', text: '', category: '', language: 'English' })
+  }
+
+  const handleUpdate = async () => {
+    if (!editModal.doc) return
+
+    try {
+      setLoading(true)
+      setMessage(null)
+
+      if (!editFormData.title || !editFormData.text || !editFormData.category || !editFormData.language) {
+        throw new Error(TRANSLATIONS[systemLanguage]?.fillAllFields || 'Please fill in all fields')
+      }
+
+      await chatApi.updateDocument(editModal.doc.id, {
+        title: editFormData.title,
+        text: editFormData.text,
+        category: editFormData.category,
+        metadata: {
+          ...editModal.doc.metadata,
+          language: editFormData.language,
+          updated_at: new Date().toISOString()
+        }
+      })
+
+      setMessage({
+        type: 'success',
+        text: TRANSLATIONS[systemLanguage]?.updateSuccess || 'FAQ updated successfully!'
+      })
+
+      closeEditModal()
+      await loadDocuments()
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text: error.message || TRANSLATIONS[systemLanguage]?.updateFailed || 'Failed to update FAQ'
+      })
     } finally {
       setLoading(false)
     }
@@ -275,8 +386,22 @@ export default function DataManagement() {
     return matchesSearch && matchesCategory && matchesLanguage
   })
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedDocuments = filteredDocuments.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterCategory, filterLanguage, itemsPerPage])
+
   // Get categories for the currently selected language in the form
   const formCategories = categories[formData.language] || []
+
+  // Get categories for the edit form language
+  const editFormCategories = categories[editFormData.language] || []
 
   // Translation helper function
   const t = (key: string): string => {
@@ -465,7 +590,7 @@ export default function DataManagement() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {filteredDocuments.map((doc) => (
+                      {paginatedDocuments.map((doc) => (
                         <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900">{doc.title}</div>
@@ -479,15 +604,16 @@ export default function DataManagement() {
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-2">
                               <button
+                                onClick={() => openEditModal(doc)}
                                 className="p-2 text-gray-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                                title="Edit FAQ"
+                                title={t('editFaq')}
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDelete(doc.id)}
+                                onClick={() => openDeleteModal(doc)}
                                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Delete FAQ"
+                                title={t('delete')}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -498,15 +624,63 @@ export default function DataManagement() {
                     </tbody>
                   </table>
 
-                  {/* Add FAQ Button */}
-                  <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} mt-6`}>
-                    <button
-                      onClick={() => setActiveTab('add')}
-                      className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
-                    >
-                      {t('addFaq')}
-                    </button>
-                  </div>
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">{t('itemsPerPage')}:</span>
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                          className="px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                        >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={50}>50</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="p-2 text-gray-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          {t('page')} {currentPage} {t('of')} {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className="p-2 text-gray-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab('add')}
+                        className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+                      >
+                        {t('addFaq')}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Add FAQ Button (when no pagination needed) */}
+                  {totalPages <= 1 && (
+                    <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} mt-6`}>
+                      <button
+                        onClick={() => setActiveTab('add')}
+                        className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+                      >
+                        {t('addFaq')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -663,6 +837,131 @@ export default function DataManagement() {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
+                  <p className="text-sm text-gray-500">{deleteModal.docTitle}</p>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-6">{t('deleteConfirmMessage')}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeDeleteModal}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t('delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit FAQ Modal */}
+      {editModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">{t('editFaq')}</h3>
+                <button
+                  onClick={closeEditModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('titleLabel')}</label>
+                  <input
+                    type="text"
+                    value={editFormData.title}
+                    onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                    placeholder={t('titlePlaceholder')}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('languageLabel')}</label>
+                    <select
+                      value={editFormData.language}
+                      onChange={e => setEditFormData({ ...editFormData, language: e.target.value, category: '' })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                    >
+                      {LANGUAGES.map(lang => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('categoryLabel')}</label>
+                    <select
+                      value={editFormData.category}
+                      onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                    >
+                      <option value="">{t('selectCategory')}</option>
+                      {editFormCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('answerContent')}</label>
+                  <textarea
+                    value={editFormData.text}
+                    onChange={e => setEditFormData({ ...editFormData, text: e.target.value })}
+                    rows={6}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                    placeholder={t('answerPlaceholder')}
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                  <button
+                    onClick={closeEditModal}
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    onClick={handleUpdate}
+                    disabled={loading}
+                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {t('updateFaq')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

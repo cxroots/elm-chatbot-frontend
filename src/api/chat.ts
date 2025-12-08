@@ -101,4 +101,12 @@ export const chatApi = {
     const response = await axios.delete(`${API_URL}/api/documents/${docId}`)
     return response.data
   },
+
+  /**
+   * Update a document
+   */
+  async updateDocument(docId: string, document: Partial<Document>): Promise<any> {
+    const response = await axios.put(`${API_URL}/api/documents/${docId}`, document)
+    return response.data
+  },
 }
