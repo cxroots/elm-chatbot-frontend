@@ -51,22 +51,23 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     showing: 'Showing',
     of: 'of',
     documents: 'documents',
-    title: 'Title',
+    question: 'Question',
+    answer: 'Answer',
     actions: 'Actions',
     addFaq: 'Add FAQ',
     noFaqsFound: 'No FAQs found',
-    getStarted: 'Get started by adding your first FAQ document.',
-    createNewFaq: 'Create New FAQ',
-    titleLabel: 'Title',
-    titlePlaceholder: 'e.g., How do I reset my password?',
+    getStarted: 'Get started by adding your first question & answer.',
+    createNewFaq: 'Add New Q&A',
+    questionLabel: 'Question',
+    questionPlaceholder: 'e.g., How do I reset my password?',
     languageLabel: 'Language',
     categoryLabel: 'Category',
     selectCategory: 'Select a category...',
     noCategoriesFound: 'No categories found for this language. Please add some in Settings.',
-    answerContent: 'Answer Content',
-    answerPlaceholder: 'Enter the detailed answer here...',
+    answerLabel: 'Answer',
+    answerPlaceholder: 'Enter the answer to this question...',
     cancel: 'Cancel',
-    saveFaq: 'Save FAQ',
+    saveFaq: 'Save Q&A',
     configuration: 'Configuration',
     manageCategories: 'Manage Categories',
     selectLanguageToEdit: 'Select Language to Edit',
@@ -76,16 +77,15 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     confirmDelete: 'Are you sure you want to delete this FAQ?',
     deleteSuccess: 'FAQ deleted successfully',
     deleteFailed: 'Failed to delete FAQ',
-    addSuccess: 'FAQ successfully added!',
+    addSuccess: 'Q&A successfully added!',
     fillAllFields: 'Please fill in all fields',
     loadFailed: 'Failed to load documents',
-    // New translations
-    editFaq: 'Edit FAQ',
-    updateFaq: 'Update FAQ',
-    updateSuccess: 'FAQ updated successfully!',
-    updateFailed: 'Failed to update FAQ',
-    deleteConfirmTitle: 'Delete FAQ',
-    deleteConfirmMessage: 'Are you sure you want to delete this FAQ? This action cannot be undone.',
+    editFaq: 'Edit Q&A',
+    updateFaq: 'Update Q&A',
+    updateSuccess: 'Q&A updated successfully!',
+    updateFailed: 'Failed to update Q&A',
+    deleteConfirmTitle: 'Delete Q&A',
+    deleteConfirmMessage: 'Are you sure you want to delete this Q&A? This action cannot be undone.',
     delete: 'Delete',
     page: 'Page',
     previous: 'Previous',
@@ -105,22 +105,23 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     showing: 'عرض',
     of: 'من',
     documents: 'مستندات',
-    title: 'العنوان',
+    question: 'السؤال',
+    answer: 'الإجابة',
     actions: 'الإجراءات',
     addFaq: 'إضافة سؤال',
     noFaqsFound: 'لم يتم العثور على أسئلة',
-    getStarted: 'ابدأ بإضافة أول سؤال شائع.',
-    createNewFaq: 'إنشاء سؤال جديد',
-    titleLabel: 'العنوان',
-    titlePlaceholder: 'مثال: كيف أقوم بإعادة تعيين كلمة المرور؟',
+    getStarted: 'ابدأ بإضافة أول سؤال وجواب.',
+    createNewFaq: 'إضافة سؤال وجواب',
+    questionLabel: 'السؤال',
+    questionPlaceholder: 'مثال: كيف أقوم بإعادة تعيين كلمة المرور؟',
     languageLabel: 'اللغة',
     categoryLabel: 'الفئة',
     selectCategory: 'اختر فئة...',
     noCategoriesFound: 'لم يتم العثور على فئات لهذه اللغة. يرجى إضافة بعضها في الإعدادات.',
-    answerContent: 'محتوى الإجابة',
-    answerPlaceholder: 'أدخل الإجابة التفصيلية هنا...',
+    answerLabel: 'الإجابة',
+    answerPlaceholder: 'أدخل الإجابة على هذا السؤال...',
     cancel: 'إلغاء',
-    saveFaq: 'حفظ السؤال',
+    saveFaq: 'حفظ السؤال والجواب',
     configuration: 'التكوين',
     manageCategories: 'إدارة الفئات',
     selectLanguageToEdit: 'اختر اللغة للتعديل',
@@ -130,16 +131,15 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     confirmDelete: 'هل أنت متأكد من حذف هذا السؤال؟',
     deleteSuccess: 'تم حذف السؤال بنجاح',
     deleteFailed: 'فشل في حذف السؤال',
-    addSuccess: 'تمت إضافة السؤال بنجاح!',
+    addSuccess: 'تمت إضافة السؤال والجواب بنجاح!',
     fillAllFields: 'يرجى ملء جميع الحقول',
     loadFailed: 'فشل في تحميل المستندات',
-    // New translations
-    editFaq: 'تعديل السؤال',
-    updateFaq: 'تحديث السؤال',
-    updateSuccess: 'تم تحديث السؤال بنجاح!',
-    updateFailed: 'فشل في تحديث السؤال',
-    deleteConfirmTitle: 'حذف السؤال',
-    deleteConfirmMessage: 'هل أنت متأكد من حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.',
+    editFaq: 'تعديل السؤال والجواب',
+    updateFaq: 'تحديث السؤال والجواب',
+    updateSuccess: 'تم تحديث السؤال والجواب بنجاح!',
+    updateFailed: 'فشل في تحديث السؤال والجواب',
+    deleteConfirmTitle: 'حذف السؤال والجواب',
+    deleteConfirmMessage: 'هل أنت متأكد من حذف هذا السؤال والجواب؟ لا يمكن التراجع عن هذا الإجراء.',
     delete: 'حذف',
     page: 'صفحة',
     previous: 'السابق',
@@ -600,7 +600,7 @@ export default function DataManagement() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('title')}</th>
+                        <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('question')}</th>
                         <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('category')}</th>
                         <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('language')}</th>
                         <th className="px-6 py-3 text-center text-sm font-medium text-gray-600">{t('actions')}</th>
@@ -710,13 +710,13 @@ export default function DataManagement() {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('titleLabel')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('questionLabel')}</label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={e => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                    placeholder={t('titlePlaceholder')}
+                    placeholder={t('questionPlaceholder')}
                   />
                 </div>
 
@@ -753,7 +753,7 @@ export default function DataManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('answerContent')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('answerLabel')}</label>
                   <textarea
                     value={formData.text}
                     onChange={e => setFormData({ ...formData, text: e.target.value })}
@@ -908,13 +908,13 @@ export default function DataManagement() {
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('titleLabel')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('questionLabel')}</label>
                   <input
                     type="text"
                     value={editFormData.title}
                     onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                    placeholder={t('titlePlaceholder')}
+                    placeholder={t('questionPlaceholder')}
                   />
                 </div>
 
@@ -948,7 +948,7 @@ export default function DataManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('answerContent')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('answerLabel')}</label>
                   <textarea
                     value={editFormData.text}
                     onChange={e => setEditFormData({ ...editFormData, text: e.target.value })}
