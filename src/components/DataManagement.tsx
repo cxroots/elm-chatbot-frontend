@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { chatApi, Document } from '../api/chat'
 import {
   PlusCircle,
@@ -123,7 +122,6 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
 }
 
 export default function DataManagement() {
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('list')
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(false)
