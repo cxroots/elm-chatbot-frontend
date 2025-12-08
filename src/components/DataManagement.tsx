@@ -208,6 +208,16 @@ export default function DataManagement() {
     localStorage.setItem('faq_categories_map', JSON.stringify(categories))
   }, [categories])
 
+  // Auto-dismiss toast notifications after 4 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [message])
+
   const loadSettings = () => {
     const savedCategories = localStorage.getItem('faq_categories_map')
     if (savedCategories) {
@@ -495,12 +505,19 @@ export default function DataManagement() {
             </button>
           </div>
 
-          {/* Notifications */}
+          {/* Toast Notification */}
           {message && (
-            <div className={`mx-6 mt-4 p-4 rounded-lg flex items-center justify-between ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+            <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+              <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 ${
+                message.type === 'success'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-red-600 text-white'
               }`}>
-              <span>{message.text}</span>
-              <button onClick={() => setMessage(null)} className="hover:opacity-75"><X className="w-4 h-4" /></button>
+                <span>{message.text}</span>
+                <button onClick={() => setMessage(null)} className="hover:opacity-75 ml-2">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
