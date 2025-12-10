@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import faqIcon from '../assets/faq-icon.png'
+import ChatWidget from './ChatWidget'
 
 type Tab = 'list' | 'add' | 'settings'
 
@@ -91,6 +92,10 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     previous: 'Previous',
     next: 'Next',
     itemsPerPage: 'Items per page',
+    testYourFaqs: 'Test Your FAQs',
+    tryAskingQuestion: 'Try asking a question to see how the AI responds with your FAQs',
+    typeMessage: 'Type a message...',
+    send: 'Send',
   },
   'Arabic': {
     faqManager: 'مدير الأسئلة الشائعة',
@@ -145,6 +150,10 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     previous: 'السابق',
     next: 'التالي',
     itemsPerPage: 'عناصر لكل صفحة',
+    testYourFaqs: 'اختبر أسئلتك الشائعة',
+    tryAskingQuestion: 'جرب طرح سؤال لترى كيف يستجيب الذكاء الاصطناعي مع أسئلتك الشائعة',
+    typeMessage: 'اكتب رسالة...',
+    send: 'إرسال',
   }
 }
 
@@ -979,6 +988,17 @@ export default function DataManagement() {
           </div>
         </div>
       )}
+
+      {/* Floating Chat Widget for Testing FAQs */}
+      <ChatWidget
+        isRTL={isRTL}
+        translations={{
+          testYourFaqs: t('testYourFaqs'),
+          tryAskingQuestion: t('tryAskingQuestion'),
+          typeMessage: t('typeMessage'),
+          send: t('send'),
+        }}
+      />
     </div>
   )
 }
