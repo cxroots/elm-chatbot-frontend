@@ -32,6 +32,23 @@ interface FAQForm {
 
 const LANGUAGES = ['English', 'Arabic']
 
+// Language code mapping
+const LANGUAGE_CODE_MAP: Record<string, string> = {
+  'English': 'en',
+  'Arabic': 'ar',
+  'en': 'English',
+  'ar': 'Arabic'
+}
+
+const getLanguageDisplay = (code: string | undefined): string => {
+  if (!code) return '—'
+  return LANGUAGE_CODE_MAP[code] || code
+}
+
+const getLanguageCode = (display: string): string => {
+  return LANGUAGE_CODE_MAP[display] || display
+}
+
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   'English': ['General', 'Billing', 'Technical Support', 'Account', 'Product Features'],
   'Arabic': ['عام', 'الفواتير', 'الدعم الفني', 'الحساب', 'ميزات المنتج']
@@ -173,7 +190,7 @@ export default function DataManagement() {
     title: '',
     text: '',
     category: '',
-    language: 'English'
+    language: 'Arabic'
   })
 
   // Search & Filter State
@@ -203,7 +220,7 @@ export default function DataManagement() {
     title: '',
     text: '',
     category: '',
-    language: 'English'
+    language: 'Arabic'
   })
 
   // Load initial data
@@ -256,18 +273,17 @@ export default function DataManagement() {
         throw new Error(TRANSLATIONS[systemLanguage]?.fillAllFields || 'Please fill in all fields')
       }
 
+      const langCode = getLanguageCode(formData.language)
       const newDoc = {
-        id: crypto.randomUUID(),
         title: formData.title,
         text: formData.text,
         category: formData.category,
-        metadata: {
-          language: formData.language,
-          created_at: new Date().toISOString()
-        }
+        language: langCode,
+        doc_type: 'faq',
+        metadata: {}
       }
 
-      await chatApi.ingestDocuments([newDoc])
+      await chatApi.ingestDocuments([newDoc], langCode)
 
       setMessage({
         type: 'success',
@@ -320,14 +336,14 @@ export default function DataManagement() {
       title: doc.title,
       text: doc.text,
       category: doc.category,
-      language: doc.metadata?.language || 'English'
+      language: getLanguageDisplay(doc.language) || 'Arabic'
     })
     setEditModal({ show: true, doc })
   }
 
   const closeEditModal = () => {
     setEditModal({ show: false, doc: null })
-    setEditFormData({ title: '', text: '', category: '', language: 'English' })
+    setEditFormData({ title: '', text: '', category: '', language: 'Arabic' })
   }
 
   const handleUpdate = async () => {
@@ -345,11 +361,9 @@ export default function DataManagement() {
         title: editFormData.title,
         text: editFormData.text,
         category: editFormData.category,
-        metadata: {
-          ...editModal.doc.metadata,
-          language: editFormData.language,
-          updated_at: new Date().toISOString()
-        }
+        language: getLanguageCode(editFormData.language),
+        doc_type: 'faq',
+        metadata: {}
       })
 
       setMessage({
@@ -400,7 +414,7 @@ export default function DataManagement() {
       doc.category.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesCategory = filterCategory === '' || doc.category === filterCategory
-    const matchesLanguage = filterLanguage === '' || doc.metadata?.language === filterLanguage
+    const matchesLanguage = filterLanguage === '' || getLanguageDisplay(doc.language) === filterLanguage
 
     return matchesSearch && matchesCategory && matchesLanguage
   })
@@ -625,7 +639,7 @@ export default function DataManagement() {
                             {doc.category}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
-                            {doc.metadata?.language || '—'}
+                            {getLanguageDisplay(doc.language)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-2">

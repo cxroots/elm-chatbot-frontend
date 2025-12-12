@@ -39,6 +39,8 @@ export interface Document {
   title: string
   text: string
   category: string
+  language?: string
+  doc_type?: string
   metadata?: any
   created_at?: string
 }
@@ -91,8 +93,12 @@ export const chatApi = {
   /**
    * Ingest documents
    */
-  async ingestDocuments(documents: any[]): Promise<any> {
-    const response = await axios.post(`${API_URL}/api/documents/ingest`, { documents })
+  async ingestDocuments(documents: any[], defaultLanguage: string = 'ar'): Promise<any> {
+    const response = await axios.post(`${API_URL}/api/documents/ingest`, {
+      documents,
+      default_language: defaultLanguage,
+      default_doc_type: 'faq'
+    })
     return response.data
   },
 
