@@ -113,6 +113,13 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     tryAskingQuestion: 'Try asking a question to see how the AI responds with your FAQs',
     typeMessage: 'Type a message...',
     send: 'Send',
+    selectAll: 'Select all',
+    selected: 'selected',
+    deleteSelected: 'Delete Selected',
+    bulkDeleteConfirmTitle: 'Delete Multiple Q&As',
+    bulkDeleteConfirmMessage: 'Are you sure you want to delete the selected Q&As? This action cannot be undone.',
+    bulkDeleteSuccess: 'Selected FAQs deleted successfully',
+    bulkDeleteFailed: 'Failed to delete some FAQs',
   },
   'Arabic': {
     faqManager: 'مدير الأسئلة الشائعة',
@@ -171,6 +178,13 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     tryAskingQuestion: 'جرب طرح سؤال لترى كيف يستجيب الذكاء الاصطناعي مع أسئلتك الشائعة',
     typeMessage: 'اكتب رسالة...',
     send: 'إرسال',
+    selectAll: 'تحديد الكل',
+    selected: 'محدد',
+    deleteSelected: 'حذف المحدد',
+    bulkDeleteConfirmTitle: 'حذف عدة أسئلة وأجوبة',
+    bulkDeleteConfirmMessage: 'هل أنت متأكد من حذف الأسئلة والأجوبة المحددة؟ لا يمكن التراجع عن هذا الإجراء.',
+    bulkDeleteSuccess: 'تم حذف الأسئلة المحددة بنجاح',
+    bulkDeleteFailed: 'فشل في حذف بعض الأسئلة',
   }
 }
 
@@ -215,6 +229,14 @@ export default function DataManagement() {
   const [editModal, setEditModal] = useState<{ show: boolean; doc: Document | null }>({
     show: false,
     doc: null
+  })
+
+  // Multi-selection State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Bulk Delete Modal State
+  const [bulkDeleteModal, setBulkDeleteModal] = useState<{ show: boolean }>({
+    show: false
   })
   const [editFormData, setEditFormData] = useState<FAQForm>({
     title: '',
@@ -378,6 +400,66 @@ export default function DataManagement() {
         type: 'error',
         text: error.message || TRANSLATIONS[systemLanguage]?.updateFailed || 'Failed to update FAQ'
       })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Selection handlers
+  const toggleSelectItem = (docId: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(docId)) {
+        newSet.delete(docId)
+      } else {
+        newSet.add(docId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const currentPageIds = paginatedDocuments.map(doc => doc.id)
+    const allSelected = currentPageIds.every(id => selectedIds.has(id))
+
+    setSelectedIds(prev => {
+      const newSet = new Set(prev)
+      if (allSelected) {
+        // Deselect all on current page
+        currentPageIds.forEach(id => newSet.delete(id))
+      } else {
+        // Select all on current page
+        currentPageIds.forEach(id => newSet.add(id))
+      }
+      return newSet
+    })
+  }
+
+  const clearSelection = () => {
+    setSelectedIds(new Set())
+  }
+
+  const openBulkDeleteModal = () => {
+    setBulkDeleteModal({ show: true })
+  }
+
+  const closeBulkDeleteModal = () => {
+    setBulkDeleteModal({ show: false })
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      setLoading(true)
+      const deletePromises = Array.from(selectedIds).map(id =>
+        chatApi.deleteDocument(id)
+      )
+      await Promise.all(deletePromises)
+      setMessage({ type: 'success', text: t('bulkDeleteSuccess') })
+      closeBulkDeleteModal()
+      clearSelection()
+      await loadDocuments()
+    } catch (error) {
+      setMessage({ type: 'error', text: t('bulkDeleteFailed') })
     } finally {
       setLoading(false)
     }
@@ -600,6 +682,30 @@ export default function DataManagement() {
                 </span>
               </div>
 
+              {/* Selection Action Bar */}
+              {selectedIds.size > 0 && (
+                <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-blue-800">
+                      {selectedIds.size} {t('selected')}
+                    </span>
+                    <button
+                      onClick={clearSelection}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      {t('cancel')}
+                    </button>
+                  </div>
+                  <button
+                    onClick={openBulkDeleteModal}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {t('deleteSelected')}
+                  </button>
+                </div>
+              )}
+
               {loading ? (
                 <div className="flex justify-center items-center h-64">
                   <Loader2 className="w-8 h-8 text-slate-600 animate-spin" />
@@ -623,6 +729,15 @@ export default function DataManagement() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200">
+                        <th className="px-4 py-3 w-12">
+                          <input
+                            type="checkbox"
+                            checked={paginatedDocuments.length > 0 && paginatedDocuments.every(doc => selectedIds.has(doc.id))}
+                            onChange={toggleSelectAll}
+                            className="w-4 h-4 text-slate-600 border-gray-300 rounded focus:ring-slate-500 cursor-pointer"
+                            title={t('selectAll')}
+                          />
+                        </th>
                         <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('question')}</th>
                         <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('category')}</th>
                         <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-sm font-medium text-gray-600`}>{t('language')}</th>
@@ -631,7 +746,15 @@ export default function DataManagement() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {paginatedDocuments.map((doc) => (
-                        <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={doc.id} className={`hover:bg-gray-50 transition-colors ${selectedIds.has(doc.id) ? 'bg-blue-50' : ''}`}>
+                          <td className="px-4 py-4 w-12">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(doc.id)}
+                              onChange={() => toggleSelectItem(doc.id)}
+                              className="w-4 h-4 text-slate-600 border-gray-300 rounded focus:ring-slate-500 cursor-pointer"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-900">{doc.title}</div>
                           </td>
@@ -907,6 +1030,42 @@ export default function DataManagement() {
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   {t('delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('bulkDeleteConfirmTitle')}</h3>
+                  <p className="text-sm text-gray-500">{selectedIds.size} {t('selected')}</p>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-6">{t('bulkDeleteConfirmMessage')}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={closeBulkDeleteModal}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t('deleteSelected')}
                 </button>
               </div>
             </div>
