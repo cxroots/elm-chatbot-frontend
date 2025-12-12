@@ -10,6 +10,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp?: string
+  sources?: Source[]
+  confidence?: number
 }
 
 export interface Source {

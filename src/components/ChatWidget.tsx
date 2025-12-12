@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react'
+import { MessageCircle, X, Send, Loader2, Sparkles, Download } from 'lucide-react'
 import { chatApi, ChatMessage } from '../api/chat'
 
 interface ChatWidgetProps {
@@ -67,7 +67,9 @@ export default function ChatWidget({ isRTL = false, translations = DEFAULT_TRANS
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response.response,
-        timestamp: response.timestamp
+        timestamp: response.timestamp,
+        sources: response.sources,
+        confidence: response.confidence
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -87,6 +89,43 @@ export default function ChatWidget({ isRTL = false, translations = DEFAULT_TRANS
   const handleClearChat = () => {
     setMessages([])
     setConversationId(undefined)
+  }
+
+  const handleExportChat = () => {
+    const exportData = {
+      export_metadata: {
+        exported_at: new Date().toISOString(),
+        export_version: '1.0',
+        total_messages: messages.length,
+        user_messages: messages.filter(m => m.role === 'user').length,
+        assistant_messages: messages.filter(m => m.role === 'assistant').length
+      },
+      conversation_id: conversationId || 'not_started',
+      messages: messages.map((msg, index) => ({
+        index,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        ...(msg.role === 'assistant' && {
+          confidence: msg.confidence,
+          sources: msg.sources?.map(source => ({
+            title: source.title,
+            excerpt: source.excerpt,
+            similarity_score: source.score
+          }))
+        })
+      }))
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `chat-export-${conversationId || 'no-id'}-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -121,13 +160,22 @@ export default function ChatWidget({ isRTL = false, translations = DEFAULT_TRANS
           </div>
           <div className="flex items-center gap-1">
             {messages.length > 0 && (
-              <button
-                onClick={handleClearChat}
-                className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-600 rounded-lg transition-colors text-xs"
-                title="Clear chat"
-              >
-                Clear
-              </button>
+              <>
+                <button
+                  onClick={handleExportChat}
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-600 rounded-lg transition-colors"
+                  title="Export chat for investigation"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleClearChat}
+                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-600 rounded-lg transition-colors text-xs"
+                  title="Clear chat"
+                >
+                  Clear
+                </button>
+              </>
             )}
             <button
               onClick={() => setIsOpen(false)}
