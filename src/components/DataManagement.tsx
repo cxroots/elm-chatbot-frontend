@@ -312,15 +312,14 @@ export default function DataManagement() {
         text: TRANSLATIONS[systemLanguage]?.addSuccess || 'FAQ successfully added!'
       })
 
-      // Reset form and go to list
+      // Reset only title and text, keep language and category for quick re-entry
       setFormData({
         title: '',
         text: '',
-        category: '',
-        language: formData.language // Keep language selected
+        category: formData.category, // Keep category selected
+        language: formData.language  // Keep language selected
       })
       await loadDocuments()
-      setActiveTab('list')
     } catch (error: any) {
       setMessage({
         type: 'error',
