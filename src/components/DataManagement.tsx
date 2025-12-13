@@ -120,6 +120,11 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     bulkDeleteConfirmMessage: 'Are you sure you want to delete the selected Q&As? This action cannot be undone.',
     bulkDeleteSuccess: 'Selected FAQs deleted successfully',
     bulkDeleteFailed: 'Failed to delete some FAQs',
+    editCategory: 'Edit',
+    saveCategory: 'Save',
+    categoryRenameSuccess: 'Category renamed successfully',
+    categoryRenameFailed: 'Failed to rename category',
+    categoryAlreadyExists: 'A category with this name already exists',
   },
   'Arabic': {
     faqManager: 'مدير الأسئلة الشائعة',
@@ -185,6 +190,11 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     bulkDeleteConfirmMessage: 'هل أنت متأكد من حذف الأسئلة والأجوبة المحددة؟ لا يمكن التراجع عن هذا الإجراء.',
     bulkDeleteSuccess: 'تم حذف الأسئلة المحددة بنجاح',
     bulkDeleteFailed: 'فشل في حذف بعض الأسئلة',
+    editCategory: 'تعديل',
+    saveCategory: 'حفظ',
+    categoryRenameSuccess: 'تم تغيير اسم الفئة بنجاح',
+    categoryRenameFailed: 'فشل في تغيير اسم الفئة',
+    categoryAlreadyExists: 'يوجد فئة بهذا الاسم بالفعل',
   }
 }
 
@@ -198,6 +208,8 @@ export default function DataManagement() {
   const [categories, setCategories] = useState<Record<string, string[]>>(DEFAULT_CATEGORIES)
   const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('English')
   const [newCategory, setNewCategory] = useState('')
+  const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  const [editedCategoryName, setEditedCategoryName] = useState('')
 
   // Form State
   const [formData, setFormData] = useState<FAQForm>({
@@ -483,6 +495,62 @@ export default function DataManagement() {
       ...categories,
       [selectedSettingsLanguage]: currentCats.filter(c => c !== catToRemove)
     })
+  }
+
+  const renameCategory = async (oldName: string, newName: string) => {
+    const trimmedName = newName.trim()
+    if (!trimmedName || trimmedName === oldName) {
+      setEditingCategory(null)
+      return
+    }
+
+    const currentCats = categories[selectedSettingsLanguage] || []
+    if (currentCats.includes(trimmedName)) {
+      setMessage({
+        type: 'error',
+        text: TRANSLATIONS[systemLanguage]?.categoryAlreadyExists || 'A category with this name already exists'
+      })
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // Find all documents with the old category name in the current language
+      const langCode = getLanguageCode(selectedSettingsLanguage)
+      const docsToUpdate = documents.filter(
+        doc => doc.category === oldName && doc.language === langCode
+      )
+
+      // Update each document in the database
+      for (const doc of docsToUpdate) {
+        await chatApi.updateDocument(doc.id, { category: trimmedName })
+      }
+
+      // Update the categories list in localStorage
+      setCategories({
+        ...categories,
+        [selectedSettingsLanguage]: currentCats.map(c => c === oldName ? trimmedName : c)
+      })
+
+      // Reload documents to reflect changes
+      await loadDocuments()
+
+      setMessage({
+        type: 'success',
+        text: TRANSLATIONS[systemLanguage]?.categoryRenameSuccess || 'Category renamed successfully'
+      })
+    } catch (error) {
+      console.error('Error renaming category:', error)
+      setMessage({
+        type: 'error',
+        text: TRANSLATIONS[systemLanguage]?.categoryRenameFailed || 'Failed to rename category'
+      })
+    } finally {
+      setLoading(false)
+      setEditingCategory(null)
+      setEditedCategoryName('')
+    }
   }
 
   // Get unique categories from documents for filter dropdown
@@ -979,13 +1047,53 @@ export default function DataManagement() {
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {(categories[selectedSettingsLanguage] || []).map(cat => (
                       <div key={cat} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                        <span className="text-sm font-medium text-gray-700">{cat}</span>
-                        <button
-                          onClick={() => removeCategory(cat)}
-                          className="text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        {editingCategory === cat ? (
+                          <input
+                            type="text"
+                            value={editedCategoryName}
+                            onChange={e => setEditedCategoryName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') renameCategory(cat, editedCategoryName)
+                              if (e.key === 'Escape') {
+                                setEditingCategory(null)
+                                setEditedCategoryName('')
+                              }
+                            }}
+                            autoFocus
+                            className="flex-1 px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-gray-700">{cat}</span>
+                        )}
+                        <div className="flex items-center gap-2">
+                          {editingCategory === cat ? (
+                            <button
+                              onClick={() => renameCategory(cat, editedCategoryName)}
+                              disabled={loading}
+                              className="text-slate-600 hover:text-slate-800 transition-colors disabled:opacity-50"
+                              title={t('saveCategory')}
+                            >
+                              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingCategory(cat)
+                                setEditedCategoryName(cat)
+                              }}
+                              className="text-gray-400 hover:text-slate-600 transition-colors"
+                              title={t('editCategory')}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removeCategory(cat)}
+                            className="text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                     {(categories[selectedSettingsLanguage] || []).length === 0 && (
