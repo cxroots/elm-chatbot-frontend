@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { chatApi, Document } from '../api/chat'
+import { useAuth } from '../context/AuthContext'
 import {
   PlusCircle,
   Settings,
@@ -17,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  LogOut,
 } from 'lucide-react'
 import faqIcon from '../assets/faq-icon.png'
 import ChatWidget from './ChatWidget'
@@ -125,6 +128,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     categoryRenameSuccess: 'Category renamed successfully',
     categoryRenameFailed: 'Failed to rename category',
     categoryAlreadyExists: 'A category with this name already exists',
+    logout: 'Logout',
   },
   'Arabic': {
     faqManager: 'مدير الأسئلة الشائعة',
@@ -195,10 +199,14 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     categoryRenameSuccess: 'تم تغيير اسم الفئة بنجاح',
     categoryRenameFailed: 'فشل في تغيير اسم الفئة',
     categoryAlreadyExists: 'يوجد فئة بهذا الاسم بالفعل',
+    logout: 'تسجيل الخروج',
   }
 }
 
 export default function DataManagement() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
   const [activeTab, setActiveTab] = useState<Tab>('list')
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(false)
@@ -225,6 +233,7 @@ export default function DataManagement() {
   const [filterLanguage, setFilterLanguage] = useState<string>('')
   const [systemLanguage, setSystemLanguage] = useState<string>('English')
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
@@ -593,6 +602,12 @@ export default function DataManagement() {
   // Check if RTL (Arabic)
   const isRTL = systemLanguage === 'Arabic'
 
+  // Handle logout
+  const handleLogout = async () => {
+    await logout()
+    navigate('/')
+  }
+
   return (
     <div className={`min-h-screen bg-gray-100 flex flex-col ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
@@ -633,9 +648,38 @@ export default function DataManagement() {
               </div>
             )}
           </div>
-          {/* User Avatar */}
-          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
+          {/* User Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <div className="w-9 h-9 bg-slate-600 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              {user && (
+                <span className="text-sm text-slate-300 hidden sm:block">{user.username}</span>
+              )}
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.username}</p>
+                  <p className="text-xs text-gray-500">Logged in</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUserDropdown(false)
+                    handleLogout()
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t('logout')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
