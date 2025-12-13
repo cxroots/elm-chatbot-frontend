@@ -33,14 +33,14 @@ interface FAQForm {
   language: string
 }
 
-const LANGUAGES = ['English', 'Arabic']
+const LANGUAGES = ['English', 'العربية']
 
 // Language code mapping
 const LANGUAGE_CODE_MAP: Record<string, string> = {
   'English': 'en',
-  'Arabic': 'ar',
+  'العربية': 'ar',
   'en': 'English',
-  'ar': 'Arabic'
+  'ar': 'العربية'
 }
 
 const getLanguageDisplay = (code: string | undefined): string => {
@@ -54,7 +54,7 @@ const getLanguageCode = (display: string): string => {
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   'English': ['General', 'Billing', 'Technical Support', 'Account', 'Product Features'],
-  'Arabic': ['عام', 'الفواتير', 'الدعم الفني', 'الحساب', 'ميزات المنتج']
+  'العربية': ['عام', 'الفواتير', 'الدعم الفني', 'الحساب', 'ميزات المنتج']
 }
 
 // Translations for UI text
@@ -130,7 +130,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     categoryAlreadyExists: 'A category with this name already exists',
     logout: 'Logout',
   },
-  'Arabic': {
+  'العربية': {
     faqManager: 'مدير الأسئلة الشائعة',
     manageKnowledgeBase: 'إدارة قاعدة المعرفة الخاصة بك',
     systemLanguage: 'لغة النظام:',
@@ -214,7 +214,7 @@ export default function DataManagement() {
 
   // Settings State
   const [categories, setCategories] = useState<Record<string, string[]>>(DEFAULT_CATEGORIES)
-  const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('Arabic')
+  const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('العربية')
   const [newCategory, setNewCategory] = useState('')
   const [editingCategory, setEditingCategory] = useState<string | null>(null)
   const [editedCategoryName, setEditedCategoryName] = useState('')
@@ -224,14 +224,17 @@ export default function DataManagement() {
     title: '',
     text: '',
     category: '',
-    language: 'Arabic'
+    language: 'العربية'
   })
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterLanguage, setFilterLanguage] = useState<string>('')
-  const [systemLanguage, setSystemLanguage] = useState<string>('English')
+  const [systemLanguage, setSystemLanguage] = useState<string>(() => {
+    const saved = localStorage.getItem('system_language')
+    return saved && ['English', 'العربية'].includes(saved) ? saved : 'English'
+  })
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
   const [showUserDropdown, setShowUserDropdown] = useState(false)
 
@@ -263,7 +266,7 @@ export default function DataManagement() {
     title: '',
     text: '',
     category: '',
-    language: 'Arabic'
+    language: 'العربية'
   })
 
   // Load initial data
@@ -276,6 +279,11 @@ export default function DataManagement() {
   useEffect(() => {
     localStorage.setItem('faq_categories_map', JSON.stringify(categories))
   }, [categories])
+
+  // Persist language preference
+  useEffect(() => {
+    localStorage.setItem('system_language', systemLanguage)
+  }, [systemLanguage])
 
   // Auto-dismiss toast notifications after 4 seconds
   useEffect(() => {
@@ -378,14 +386,14 @@ export default function DataManagement() {
       title: doc.title,
       text: doc.text,
       category: doc.category,
-      language: getLanguageDisplay(doc.language) || 'Arabic'
+      language: getLanguageDisplay(doc.language) || 'العربية'
     })
     setEditModal({ show: true, doc })
   }
 
   const closeEditModal = () => {
     setEditModal({ show: false, doc: null })
-    setEditFormData({ title: '', text: '', category: '', language: 'Arabic' })
+    setEditFormData({ title: '', text: '', category: '', language: 'العربية' })
   }
 
   const handleUpdate = async () => {
@@ -600,7 +608,7 @@ export default function DataManagement() {
   }
 
   // Check if RTL (Arabic)
-  const isRTL = systemLanguage === 'Arabic'
+  const isRTL = systemLanguage === 'العربية'
 
   // Handle logout
   const handleLogout = async () => {
