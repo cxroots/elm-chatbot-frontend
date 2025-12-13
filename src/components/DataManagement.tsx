@@ -62,7 +62,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     systemLanguage: 'System Language:',
     allFaqs: 'All FAQs',
     addNew: 'Add New',
-    settings: 'Settings',
+    settings: 'Manage Categories',
     searchFaqs: 'Search FAQs...',
     category: 'Category',
     language: 'Language',
@@ -132,7 +132,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     systemLanguage: 'لغة النظام:',
     allFaqs: 'جميع الأسئلة',
     addNew: 'إضافة جديد',
-    settings: 'الإعدادات',
+    settings: 'إدارة الفئات',
     searchFaqs: 'البحث في الأسئلة...',
     category: 'الفئة',
     language: 'اللغة',
@@ -206,7 +206,7 @@ export default function DataManagement() {
 
   // Settings State
   const [categories, setCategories] = useState<Record<string, string[]>>(DEFAULT_CATEGORIES)
-  const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('English')
+  const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('Arabic')
   const [newCategory, setNewCategory] = useState('')
   const [editingCategory, setEditingCategory] = useState<string | null>(null)
   const [editedCategoryName, setEditedCategoryName] = useState('')
