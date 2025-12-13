@@ -84,6 +84,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     languageLabel: 'Language',
     categoryLabel: 'Category',
     selectCategory: 'Select a category...',
+    categoryPlaceholder: 'Type or select a category...',
     noCategoriesFound: 'No categories found for this language. Please add some in Settings.',
     answerLabel: 'Answer',
     answerPlaceholder: 'Enter the answer to this question...',
@@ -155,6 +156,7 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     languageLabel: 'اللغة',
     categoryLabel: 'الفئة',
     selectCategory: 'اختر فئة...',
+    categoryPlaceholder: 'اكتب أو اختر فئة...',
     noCategoriesFound: 'لم يتم العثور على فئات لهذه اللغة. يرجى إضافة بعضها في الإعدادات.',
     answerLabel: 'الإجابة',
     answerPlaceholder: 'أدخل الإجابة على هذا السؤال...',
@@ -272,13 +274,7 @@ export default function DataManagement() {
   // Load initial data
   useEffect(() => {
     loadDocuments()
-    loadSettings()
   }, [])
-
-  // Persist settings whenever they change
-  useEffect(() => {
-    localStorage.setItem('faq_categories_map', JSON.stringify(categories))
-  }, [categories])
 
   // Persist language preference
   useEffect(() => {
@@ -295,18 +291,24 @@ export default function DataManagement() {
     }
   }, [message])
 
-  const loadSettings = () => {
-    const savedCategories = localStorage.getItem('faq_categories_map')
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories))
-    }
-  }
-
   const loadDocuments = async () => {
     try {
       setLoading(true)
       const response = await chatApi.getAllDocuments()
       setDocuments(response.documents)
+
+      // Extract categories from documents grouped by language
+      const extractedCategories: Record<string, string[]> = { ...DEFAULT_CATEGORIES }
+      response.documents.forEach(doc => {
+        const langDisplay = getLanguageDisplay(doc.language) || 'English'
+        if (!extractedCategories[langDisplay]) {
+          extractedCategories[langDisplay] = []
+        }
+        if (doc.category && !extractedCategories[langDisplay].includes(doc.category)) {
+          extractedCategories[langDisplay].push(doc.category)
+        }
+      })
+      setCategories(extractedCategories)
     } catch (error) {
       console.error('Error loading documents:', error)
       setMessage({ type: 'error', text: TRANSLATIONS[systemLanguage]?.loadFailed || 'Failed to load documents' })
@@ -544,7 +546,7 @@ export default function DataManagement() {
         await chatApi.updateDocument(doc.id, { category: trimmedName })
       }
 
-      // Update the categories list in localStorage
+      // Update the local categories state
       setCategories({
         ...categories,
         [selectedSettingsLanguage]: currentCats.map(c => c === oldName ? trimmedName : c)
@@ -1001,19 +1003,19 @@ export default function DataManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('categoryLabel')}</label>
-                    <select
+                    <input
+                      type="text"
+                      list="category-options"
                       value={formData.category}
                       onChange={e => setFormData({ ...formData, category: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">{t('selectCategory')}</option>
+                      placeholder={t('categoryPlaceholder')}
+                    />
+                    <datalist id="category-options">
                       {formCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat} />
                       ))}
-                    </select>
-                    {formCategories.length === 0 && (
-                      <p className="text-xs text-red-500 mt-1">{t('noCategoriesFound')}</p>
-                    )}
+                    </datalist>
                   </div>
                 </div>
 
@@ -1275,16 +1277,19 @@ export default function DataManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('categoryLabel')}</label>
-                    <select
+                    <input
+                      type="text"
+                      list="edit-category-options"
                       value={editFormData.category}
                       onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">{t('selectCategory')}</option>
+                      placeholder={t('categoryPlaceholder')}
+                    />
+                    <datalist id="edit-category-options">
                       {editFormCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
                 </div>
 
