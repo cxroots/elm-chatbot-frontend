@@ -4,7 +4,6 @@ import { chatApi, Document } from '../api/chat'
 import { useAuth } from '../context/AuthContext'
 import {
   PlusCircle,
-  Settings,
   Search,
   Trash2,
   Pencil,
@@ -52,11 +51,6 @@ const getLanguageCode = (display: string): string => {
   return LANGUAGE_CODE_MAP[display] || display
 }
 
-const DEFAULT_CATEGORIES: Record<string, string[]> = {
-  'English': ['General', 'Billing', 'Technical Support', 'Account', 'Product Features'],
-  'العربية': ['عام', 'الفواتير', 'الدعم الفني', 'الحساب', 'ميزات المنتج']
-}
-
 // Translations for UI text
 const TRANSLATIONS: Record<string, Record<string, string>> = {
   'English': {
@@ -85,6 +79,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     categoryLabel: 'Category',
     selectCategory: 'Select a category...',
     categoryPlaceholder: 'Type or select a category...',
+    otherCategory: 'Other (type new)',
+    newCategoryInputPlaceholder: 'Enter new category name...',
     noCategoriesFound: 'No categories found for this language. Please add some in Settings.',
     answerLabel: 'Answer',
     answerPlaceholder: 'Enter the answer to this question...',
@@ -157,6 +153,8 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     categoryLabel: 'الفئة',
     selectCategory: 'اختر فئة...',
     categoryPlaceholder: 'اكتب أو اختر فئة...',
+    otherCategory: 'أخرى (اكتب جديد)',
+    newCategoryInputPlaceholder: 'أدخل اسم الفئة الجديدة...',
     noCategoriesFound: 'لم يتم العثور على فئات لهذه اللغة. يرجى إضافة بعضها في الإعدادات.',
     answerLabel: 'الإجابة',
     answerPlaceholder: 'أدخل الإجابة على هذا السؤال...',
@@ -215,7 +213,7 @@ export default function DataManagement() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Settings State
-  const [categories, setCategories] = useState<Record<string, string[]>>(DEFAULT_CATEGORIES)
+  const [categories, setCategories] = useState<Record<string, string[]>>({})
   const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('العربية')
   const [newCategory, setNewCategory] = useState('')
   const [editingCategory, setEditingCategory] = useState<string | null>(null)
@@ -228,6 +226,8 @@ export default function DataManagement() {
     category: '',
     language: 'العربية'
   })
+  const [showCustomCategory, setShowCustomCategory] = useState(false)
+  const [showEditCustomCategory, setShowEditCustomCategory] = useState(false)
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('')
@@ -298,7 +298,7 @@ export default function DataManagement() {
       setDocuments(response.documents)
 
       // Extract categories from documents grouped by language
-      const extractedCategories: Record<string, string[]> = { ...DEFAULT_CATEGORIES }
+      const extractedCategories: Record<string, string[]> = {}
       response.documents.forEach(doc => {
         const langDisplay = getLanguageDisplay(doc.language) || 'English'
         if (!extractedCategories[langDisplay]) {
@@ -350,6 +350,7 @@ export default function DataManagement() {
         category: formData.category, // Keep category selected
         language: formData.language  // Keep language selected
       })
+      setShowCustomCategory(false)
       await loadDocuments()
     } catch (error: any) {
       setMessage({
@@ -719,6 +720,7 @@ export default function DataManagement() {
               <PlusCircle className="w-4 h-4" />
               {t('addNew')}
             </button>
+            {/* Settings tab hidden - categories now derived from FAQs
             <button
               onClick={() => setActiveTab('settings')}
               className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'settings'
@@ -729,6 +731,7 @@ export default function DataManagement() {
               <Settings className="w-4 h-4" />
               {t('settings')}
             </button>
+            */}
           </div>
 
           {/* Toast Notification */}
@@ -1003,19 +1006,47 @@ export default function DataManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('categoryLabel')}</label>
-                    <input
-                      type="text"
-                      list="category-options"
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
-                      placeholder={t('categoryPlaceholder')}
-                    />
-                    <datalist id="category-options">
-                      {formCategories.map(cat => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
+                    {!showCustomCategory ? (
+                      <select
+                        value={formData.category}
+                        onChange={e => {
+                          if (e.target.value === '__other__') {
+                            setShowCustomCategory(true)
+                            setFormData({ ...formData, category: '' })
+                          } else {
+                            setFormData({ ...formData, category: e.target.value })
+                          }
+                        }}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">{t('selectCategory')}</option>
+                        {formCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                        <option value="__other__">{t('otherCategory')}</option>
+                      </select>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={formData.category}
+                          onChange={e => setFormData({ ...formData, category: e.target.value })}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                          placeholder={t('newCategoryInputPlaceholder')}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomCategory(false)
+                            setFormData({ ...formData, category: '' })
+                          }}
+                          className="px-3 py-2 text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1050,7 +1081,7 @@ export default function DataManagement() {
             </div>
           )}
 
-          {/* SETTINGS VIEW */}
+          {/* SETTINGS VIEW - Hidden: categories now derived from FAQs
           {activeTab === 'settings' && (
             <div className="p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('configuration')}</h2>
@@ -1062,7 +1093,6 @@ export default function DataManagement() {
                     <h3 className="text-lg font-semibold text-gray-900">{t('manageCategories')}</h3>
                   </div>
 
-                  {/* Language Selector for Settings */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('selectLanguageToEdit')}</label>
                     <div className="flex gap-2">
@@ -1158,6 +1188,7 @@ export default function DataManagement() {
               </div>
             </div>
           )}
+          */}
           </div>
         </div>
       </main>
@@ -1277,19 +1308,46 @@ export default function DataManagement() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('categoryLabel')}</label>
-                    <input
-                      type="text"
-                      list="edit-category-options"
-                      value={editFormData.category}
-                      onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
-                      placeholder={t('categoryPlaceholder')}
-                    />
-                    <datalist id="edit-category-options">
-                      {editFormCategories.map(cat => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
+                    {!showEditCustomCategory ? (
+                      <select
+                        value={editFormCategories.includes(editFormData.category) ? editFormData.category : '__other__'}
+                        onChange={e => {
+                          if (e.target.value === '__other__') {
+                            setShowEditCustomCategory(true)
+                          } else {
+                            setEditFormData({ ...editFormData, category: e.target.value })
+                          }
+                        }}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                      >
+                        <option value="">{t('selectCategory')}</option>
+                        {editFormCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                        <option value="__other__">{t('otherCategory')}</option>
+                      </select>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editFormData.category}
+                          onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent bg-white"
+                          placeholder={t('newCategoryInputPlaceholder')}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowEditCustomCategory(false)
+                            setEditFormData({ ...editFormData, category: '' })
+                          }}
+                          className="px-3 py-2 text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
