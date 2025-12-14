@@ -10,7 +10,6 @@ import {
   Save,
   Loader2,
   FileText,
-  Tag,
   X,
   ChevronDown,
   User,
@@ -212,12 +211,13 @@ export default function DataManagement() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  // Settings State
+  // Settings State (categories derived from documents)
   const [categories, setCategories] = useState<Record<string, string[]>>({})
-  const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('العربية')
-  const [newCategory, setNewCategory] = useState('')
-  const [editingCategory, setEditingCategory] = useState<string | null>(null)
-  const [editedCategoryName, setEditedCategoryName] = useState('')
+  // Settings tab hidden - these states preserved for potential future use
+  // const [selectedSettingsLanguage, setSelectedSettingsLanguage] = useState<string>('العربية')
+  // const [newCategory, setNewCategory] = useState('')
+  // const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  // const [editedCategoryName, setEditedCategoryName] = useState('')
 
   // Form State
   const [formData, setFormData] = useState<FAQForm>({
@@ -496,9 +496,10 @@ export default function DataManagement() {
     }
   }
 
+  // Settings tab functions - hidden, preserved for potential future use
+  /*
   const addCategory = () => {
     if (!newCategory.trim()) return
-
     const currentCats = categories[selectedSettingsLanguage] || []
     if (!currentCats.includes(newCategory.trim())) {
       setCategories({
@@ -523,7 +524,6 @@ export default function DataManagement() {
       setEditingCategory(null)
       return
     }
-
     const currentCats = categories[selectedSettingsLanguage] || []
     if (currentCats.includes(trimmedName)) {
       setMessage({
@@ -532,30 +532,20 @@ export default function DataManagement() {
       })
       return
     }
-
     try {
       setLoading(true)
-
-      // Find all documents with the old category name in the current language
       const langCode = getLanguageCode(selectedSettingsLanguage)
       const docsToUpdate = documents.filter(
         doc => doc.category === oldName && doc.language === langCode
       )
-
-      // Update each document in the database
       for (const doc of docsToUpdate) {
         await chatApi.updateDocument(doc.id, { category: trimmedName })
       }
-
-      // Update the local categories state
       setCategories({
         ...categories,
         [selectedSettingsLanguage]: currentCats.map(c => c === oldName ? trimmedName : c)
       })
-
-      // Reload documents to reflect changes
       await loadDocuments()
-
       setMessage({
         type: 'success',
         text: TRANSLATIONS[systemLanguage]?.categoryRenameSuccess || 'Category renamed successfully'
@@ -572,6 +562,7 @@ export default function DataManagement() {
       setEditedCategoryName('')
     }
   }
+  */
 
   // Get unique categories from documents for filter dropdown
   const uniqueCategories = [...new Set(documents.map(doc => doc.category))]
