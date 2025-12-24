@@ -18,8 +18,9 @@ import {
   ChevronRight,
   AlertTriangle,
   LogOut,
+  Home,
 } from 'lucide-react'
-import faqIcon from '../assets/faq-icon.png'
+import faqIcon from '../assets/faq-icon-new.png'
 import ChatWidget from './ChatWidget'
 
 type Tab = 'list' | 'add' | 'settings'
@@ -614,7 +615,15 @@ export default function DataManagement() {
     <div className={`min-h-screen bg-gray-100 flex flex-col ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="bg-slate-800 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          {/* Back to Portal Button */}
+          <button
+            onClick={() => navigate('/portal')}
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+            title="Back to Portal"
+          >
+            <Home className="w-5 h-5" />
+          </button>
           <img src={faqIcon} alt="FAQ Manager" className="w-12 h-12" />
           <div>
             <h1 className="text-xl font-bold text-white">{t('faqManager')}</h1>

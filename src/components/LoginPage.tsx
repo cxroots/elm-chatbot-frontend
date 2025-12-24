@@ -1,13 +1,13 @@
 /**
  * Login Page Component
- * First page users see - provides access to FAQ management
+ * First page users see - provides access to Management Portal
  */
 
 import { useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Database, MessageCircle, Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import { LogIn, Database, BarChart3, Settings, AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import faqIcon from '../assets/faq-icon.png'
+import portalLogo from '../assets/portal-logo.png'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     try {
       await login({ username, password })
-      navigate('/data')
+      navigate('/portal')
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.detail || 'Invalid credentials. Please try again.'
@@ -43,12 +43,12 @@ export default function LoginPage() {
           {/* Logo & Title */}
           <div className="text-center mb-8">
             <img
-              src={faqIcon}
-              alt="FAQ Manager"
+              src={portalLogo}
+              alt="Management Portal"
               className="w-20 h-20 mx-auto mb-4 drop-shadow-lg"
             />
-            <h1 className="text-3xl font-bold text-white mb-2">FAQ Manager</h1>
-            <p className="text-slate-400">Intelligent FAQ Management System</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Management Portal</h1>
+            <p className="text-slate-400">Centralized Management System</p>
           </div>
 
           {/* Login Card */}
@@ -127,15 +127,15 @@ export default function LoginPage() {
           <div className="mt-8 grid grid-cols-3 gap-4">
             <div className="text-center p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
               <Database className="w-6 h-6 text-primary-400 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">Manage FAQs</p>
+              <p className="text-xs text-slate-400">FAQ Manager</p>
             </div>
             <div className="text-center p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
-              <MessageCircle className="w-6 h-6 text-primary-400 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">Test Chat</p>
+              <BarChart3 className="w-6 h-6 text-primary-400 mx-auto mb-2" />
+              <p className="text-xs text-slate-400">Usage Insights</p>
             </div>
             <div className="text-center p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
-              <Sparkles className="w-6 h-6 text-primary-400 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">AI Powered</p>
+              <Settings className="w-6 h-6 text-primary-400 mx-auto mb-2" />
+              <p className="text-xs text-slate-400">More Tools</p>
             </div>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="py-4 text-center text-slate-500 text-sm">
-        <p>FAQ Management System</p>
+        <p>Management Portal</p>
       </footer>
     </div>
   )

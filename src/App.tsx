@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage from './components/LoginPage'
+import PortalDashboard from './components/PortalDashboard'
 import DataManagement from './components/DataManagement'
 import { Loader2 } from 'lucide-react'
 import './index.css'
@@ -32,7 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 /**
  * Public Route wrapper
- * Redirects to /data if user is already authenticated
+ * Redirects to /portal if user is already authenticated
  */
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -49,7 +50,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/data" replace />
+    return <Navigate to="/portal" replace />
   }
 
   return <>{children}</>
@@ -58,6 +59,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Login Page */}
       <Route
         path="/"
         element={
@@ -66,14 +68,26 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      {/* Portal Dashboard - Main hub after login */}
       <Route
-        path="/data"
+        path="/portal"
+        element={
+          <ProtectedRoute>
+            <PortalDashboard />
+          </ProtectedRoute>
+        }
+      />
+      {/* FAQ Manager */}
+      <Route
+        path="/faq"
         element={
           <ProtectedRoute>
             <DataManagement />
           </ProtectedRoute>
         }
       />
+      {/* Legacy route redirect */}
+      <Route path="/data" element={<Navigate to="/faq" replace />} />
     </Routes>
   )
 }
